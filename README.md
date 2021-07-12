@@ -47,16 +47,24 @@ Criteria matching should be always in order:
 
 ### Model example
 
+* userId: non-null number
+* username: non-null string
+* name: non-null string 
+* surname: non-null string
+* salary: non-null number
+* from: non-null string in format `yyyy-MM-dd'T'HH:mm:ss.SSSXXX`
+* to: null or string in format `yyyy-MM-dd'T'HH:mm:ss.SSSXXX`
+
 ```json
 [
   {
-    "userId": 0, // non-null
-    "username": "string", // non-null
-    "name": "string", // non-null
-    "surname": "string", // non-null
-    "salary": 10000, // non-null
-    "from": "yyyy-MM-dd'T'HH:mm:ss.SSSXXX", // non-null in format
-    "to": "yyyy-MM-dd'T'HH:mm:ss.SSSXXX" // null or in format
+    "userId": 0,
+    "username": "string",
+    "name": "string",
+    "surname": "string",
+    "salary": 10000,
+    "from": "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+    "to": "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"
   }
 ]
 ```
@@ -68,14 +76,23 @@ Search user by `id` which is `userId`, Returns model. If not exits, 404 Not Foun
 * not empty, number value, `id` >= 0
 
 ### Model example
+
+* userId: non-null number
+* username: non-null string
+* name: non-null string
+* surname: non-null string
+* salary: non-null number
+* from: non-null string in format `yyyy-MM-dd'T'HH:mm:ss.SSSXXX`
+* to: null or string in format `yyyy-MM-dd'T'HH:mm:ss.SSSXXX`
+
 ```json
 {
-  "userId": 0, // non-null
-  "username": "string", // non-null
-  "name": "string", // non-null
-  "surname": "string", // non-null
-  "salary": 10000, // non-null
-  "from": "yyyy-MM-dd'T'HH:mm:ss.SSSXXX", // non-null in format
-  "to": "yyyy-MM-dd'T'HH:mm:ss.SSSXXX" // null or in format
+  "userId": 0,
+  "username": "string",
+  "name": "string",
+  "surname": "string",
+  "salary": 10000,
+  "from": "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+  "to": "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"
 }
 ```

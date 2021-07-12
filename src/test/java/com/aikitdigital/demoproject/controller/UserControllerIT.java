@@ -21,6 +21,10 @@ import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 @ContextConfiguration(initializers = {WireMockInitializer.class})
 public class UserControllerIT {
 
+    /**
+     * Manually initialized and registered into the context in {@link WireMockInitializer}
+     */
+    @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
     @Autowired
     private WireMockServer wireMockServer;
 
