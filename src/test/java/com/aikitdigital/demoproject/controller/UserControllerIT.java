@@ -50,11 +50,11 @@ public class UserControllerIT {
     }
 
     @Test
-    @DisplayName("search users with name:Katarina and name:Sanjeev")
+    @DisplayName("search users with name:Katarina or name:Sanjeev")
     void test0() {
         this.webTestClient
                 .get()
-                .uri("http://localhost:" + port + "/api/users?search=name:Katarina,name:Sanjeev")
+                .uri("http://localhost:" + port + "/api/users?search=name:Katarina|name:Sanjeev")
                 .exchange()
                 .expectStatus()
                 .is2xxSuccessful()
@@ -153,11 +153,11 @@ public class UserControllerIT {
     }
 
     @Test
-    @DisplayName("search users with userId:0 and userId:1")
+    @DisplayName("search users with userId:0 or userId:1")
     void test8() {
         this.webTestClient
                 .get()
-                .uri("http://localhost:" + port + "/api/users?search=userId:0,userId:1")
+                .uri("http://localhost:" + port + "/api/users?search=userId:0|userId:1")
                 .exchange()
                 .expectStatus()
                 .is2xxSuccessful()
@@ -249,5 +249,43 @@ public class UserControllerIT {
                 .jsonPath("$[0].userId").isEqualTo(21)
                 .jsonPath("$[10].userId").isEqualTo(27)
                 .jsonPath("$[24].userId").isEqualTo(30);
+    }
+
+    @Test
+    @DisplayName("search users with (userId>=5 and userId<10) or (userId:0 and username:romymeadows)")
+    void test16() {
+        this.webTestClient
+                .get()
+                .uri("http://localhost:" + port + "/api/users?search=(userId>=5,userId<10)|(userId:0,username:romymeadows)&order=userId:DESC")
+                .exchange()
+                .expectStatus()
+                .is2xxSuccessful()
+                .expectBody()
+                .jsonPath("$.length()").isEqualTo(6)
+                .jsonPath("$[0].userId").isEqualTo(0)
+                .jsonPath("$[1].userId").isEqualTo(5)
+                .jsonPath("$[2].userId").isEqualTo(6)
+                .jsonPath("$[3].userId").isEqualTo(7)
+                .jsonPath("$[4].userId").isEqualTo(8)
+                .jsonPath("$[5].userId").isEqualTo(9);
+    }
+
+    @Test
+    @DisplayName("search users with (userId>=5 and userId<=10) or (userId:0 and username:invalid)")
+    void test17() {
+        this.webTestClient
+                .get()
+                .uri("http://localhost:" + port + "/api/users?search=(userId>=5,userId<=10)|(userId:0,username:invalid)&order=userId:DESC")
+                .exchange()
+                .expectStatus()
+                .is2xxSuccessful()
+                .expectBody()
+                .jsonPath("$.length()").isEqualTo(6)
+                .jsonPath("$[0].userId").isEqualTo(5)
+                .jsonPath("$[1].userId").isEqualTo(6)
+                .jsonPath("$[2].userId").isEqualTo(7)
+                .jsonPath("$[3].userId").isEqualTo(8)
+                .jsonPath("$[4].userId").isEqualTo(9)
+                .jsonPath("$[4].userId").isEqualTo(10);
     }
 }

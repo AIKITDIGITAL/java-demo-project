@@ -12,10 +12,10 @@
 
 # API Specification
 ## /api/users
-Criteria matching should be always in order:
+Criteria matching should be always in order below:
 * validate that input parameters are valid, if not, return 400 Bad Request
 * first get data from server/mock
-* filter data by `search` param
+* filter data by `search` param, `,` is logic operator `AND`, `|` is logic operator `OR` and `()` are used to change the priority.
 * get sublist of data limited by `offset` and `limit`, if not preset use defaults (offset:0, limit:25)
 * sort data by `sort` param
 * return result (if criteria does not match any result, empty list is returned)
@@ -23,7 +23,9 @@ Criteria matching should be always in order:
 #### search
 * required = false
 * if present not empty and matches criteria below
-* could contain (userId, username, name, surname, salary, from, to)
+* valid logic operators `,` for `AND`, `|` for `OR` and `()` to change priority
+* valid fields (userId, username, name, surname, salary, from, to) case-sensitive
+* value is case-sensitive
 * valid operators for string values are (: for equals, ~ for not equal)
 * valid operators for number values are (: for equals, ~ for not equal, <, >, <=, =>)
 * valid operators for date values are (: for equals, ~ for not equal, <, >, <=, =>)
@@ -70,7 +72,7 @@ Criteria matching should be always in order:
 ```
 
 ## /api/users/{id}
-Search user by `id` which is `userId`, Returns model. If not exits, 404 Not Found is returned.
+Search user by `id` (`userId`) returns model with response code 200. If not found, response code 404 Not Found is returned.
 ### Query parameters
 #### {id}
 * not empty, number value, `id` >= 0
