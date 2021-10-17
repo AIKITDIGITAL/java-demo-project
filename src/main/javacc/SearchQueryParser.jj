@@ -1,0 +1,180 @@
+options {
+    LOOKAHEAD = 1;
+    CHOICE_AMBIGUITY_CHECK = 3;
+    OTHER_AMBIGUITY_CHECK = 2;
+    STATIC = false;
+    DEBUG_PARSER = false;
+    DEBUG_LOOKAHEAD = false;
+    DEBUG_TOKEN_MANAGER = false;
+    UNICODE_INPUT = true;
+    SUPPORT_CLASS_VISIBILITY_PUBLIC = false;
+}
+
+PARSER_BEGIN(SearchQueryParser)
+
+package com.aikitdigital.demoproject.parser;
+
+import com.aikitdigital.demoproject.parser.syntaxtree.*;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+
+final class SearchQueryParser {
+
+    private NodesFactory factory;
+
+    public SearchQueryParser(InputStream stream, String encoding, NodesFactory factory) {
+        this(stream, encoding);
+        this.factory = factory;
+    }
+
+    private String unescape(String s) {
+        if (s.indexOf('\\') < 0) {
+            return s;
+        }
+        final StringBuilder sb = new StringBuilder(s.length());
+
+        for (int i = 0; i < s.length(); i++) {
+            if (s.charAt(i) == '\\') {
+                i++;
+            }
+            if (i < s.length()) {
+                sb.append(s.charAt(i));
+            }
+        }
+        return sb.toString();
+    }
+}
+
+PARSER_END(SearchQueryParser)
+
+
+SKIP : {
+    " " | "\t"
+}
+
+TOKEN : {
+    < NULL        : "null" >
+  | < #ESCAPED_CHAR : "\\" ~[] >
+}
+
+TOKEN : {
+    < UNRESERVED_STR    : ( ~["\"", "'", "(", ")", ",", "=", "<", ">", "~", " ", "|", ":"] )+ >
+  | < SINGLE_QUOTED_STR : ( "'" ( <ESCAPED_CHAR> | ~["'", "\\"] )* "'" ) >
+  | < DOUBLE_QUOTED_STR : ( "\"" ( <ESCAPED_CHAR> | ~["\"", "\\"] )* "\"" ) >
+}
+
+TOKEN : {
+    < AND        : "," >
+  | < OR         : "|" >
+  | < LPAREN     : "(" >
+  | < RPAREN     : ")" >
+  | < COMPARISON : ( ":" | "~" | ">=" | "<=" | "<" | ">" ) >
+}
+
+
+Node Input():
+{
+    final Node node;
+}
+{
+    node = Or() <EOF>
+    {
+        return node;
+    }
+}
+
+Node Or():
+{
+    final List<Node> nodes = new ArrayList<Node>(3);
+    Node node;
+}
+{
+    node = And() { nodes.add(node); }
+    (
+        <OR> node = And() { nodes.add(node); }
+    )*
+    {
+        return nodes.size() != 1 ? factory.createLogicalNode(LogicalOperator.OR, nodes) : nodes.get(0);
+    }
+}
+
+Node And():
+{
+    final List<Node> nodes = new ArrayList<Node>(3);
+    Node node;
+}
+{
+    node = Constraint() { nodes.add(node); }
+    (
+        <AND> node = Constraint() { nodes.add(node); }
+    )*
+    {
+        return nodes.size() != 1 ? factory.createLogicalNode(LogicalOperator.AND, nodes) : nodes.get(0);
+    }
+}
+
+Node Constraint():
+{
+    final Node node;
+}
+{
+    ( node = Group() | node = Comparison() )
+    {
+        return node;
+    }
+}
+
+Node Group():
+{
+    final Node node;
+}
+{
+    <LPAREN> node = Or() <RPAREN>
+    {
+        return node;
+    }
+}
+
+ComparisonNode Comparison():
+{
+    final String sel;
+    final String op;
+    final Optional<String> arg;
+}
+{
+    ( sel = Selector() op = Operator() arg = Argument() )
+    {
+        return factory.createComparisonNode(op, sel, arg);
+    }
+}
+
+String Selector(): {}
+{
+    token = <UNRESERVED_STR>
+    {
+        return token.image;
+    }
+}
+
+String Operator(): {}
+{
+    ( token = <COMPARISON> )
+    {
+        return token.image;
+    }
+}
+
+Optional<String> Argument(): {}
+{
+    token = <UNRESERVED_STR> { return Optional.of(token.image); }
+    |
+    token = <NULL> { return Optional.empty(); }
+    |
+    ( token = <DOUBLE_QUOTED_STR> | token = <SINGLE_QUOTED_STR> )
+    {
+        return Optional.of(unescape(token.image.substring(1, token.image.length() -1)));
+    }
+}

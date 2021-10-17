@@ -134,7 +134,7 @@ public class UserControllerIT {
                 .is2xxSuccessful()
                 .expectBody()
                 .jsonPath("$.length()").isEqualTo(1)
-                .jsonPath("$[11].userId").isEqualTo(49);
+                .jsonPath("$[0].userId").isEqualTo(49); //as the expected length is 1 the index cannot be 11
     }
 
     @Test
@@ -200,7 +200,7 @@ public class UserControllerIT {
     void test11() {
         this.webTestClient
                 .get()
-                .uri("http://localhost:" + port + "/api/users?search=userId>=15,userId<=45&offset=5&limit=15&order=userId:DESC")
+                .uri("http://localhost:" + port + "/api/users?search=userId>=15,userId<=45&offset=5&limit=15&order=userId:ASC") //looks like the order direction was mistaken for the opposite (see the tests below as well)
                 .exchange()
                 .expectStatus()
                 .is2xxSuccessful()
@@ -213,7 +213,7 @@ public class UserControllerIT {
     void test13() {
         this.webTestClient
                 .get()
-                .uri("http://localhost:" + port + "/api/users?search=userId>=15,userId<=45&offset=5&limit=15&order=userId:ASC")
+                .uri("http://localhost:" + port + "/api/users?search=userId>=15,userId<=45&offset=5&limit=15&order=userId:DESC")
                 .exchange()
                 .expectStatus()
                 .is2xxSuccessful()
@@ -240,7 +240,7 @@ public class UserControllerIT {
     void test15() {
         this.webTestClient
                 .get()
-                .uri("http://localhost:" + port + "/api/users?search=from>=2018-01-16T13:03:14.385%2B01:00&order=from:DeSc")
+                .uri("http://localhost:" + port + "/api/users?search=from>=\"2018-01-16T13:03:14.385%2B01:00\"&order=from:DeSc")
                 .exchange()
                 .expectStatus()
                 .is2xxSuccessful()
@@ -256,7 +256,7 @@ public class UserControllerIT {
     void test16() {
         this.webTestClient
                 .get()
-                .uri("http://localhost:" + port + "/api/users?search=(userId>=5,userId<10)|(userId:0,username:romymeadows)&order=userId:DESC")
+                .uri("http://localhost:" + port + "/api/users?search=(userId>=5,userId<10)|(userId:0,username:romymeadows)&order=userId:ASC") //the order doesn't correspond to the expectations below
                 .exchange()
                 .expectStatus()
                 .is2xxSuccessful()
@@ -275,7 +275,7 @@ public class UserControllerIT {
     void test17() {
         this.webTestClient
                 .get()
-                .uri("http://localhost:" + port + "/api/users?search=(userId>=5,userId<=10)|(userId:0,username:invalid)&order=userId:DESC")
+                .uri("http://localhost:" + port + "/api/users?search=(userId>=5,userId<=10)|(userId:0,username:invalid)&order=userId:ASC") //the order doesn't correspond to the expectations below
                 .exchange()
                 .expectStatus()
                 .is2xxSuccessful()
@@ -286,6 +286,83 @@ public class UserControllerIT {
                 .jsonPath("$[2].userId").isEqualTo(7)
                 .jsonPath("$[3].userId").isEqualTo(8)
                 .jsonPath("$[4].userId").isEqualTo(9)
-                .jsonPath("$[4].userId").isEqualTo(10);
+                .jsonPath("$[5].userId").isEqualTo(10); //as the previous index is 4 this has to be index 5
+    }
+
+    @Test
+    @DisplayName("search users with nonExistentField. This should return bad request because nonExistentField user field doesn't exist")
+    void test18() {
+        this.webTestClient
+                .get()
+                .uri("http://localhost:" + port + "/api/users?search=nonExistentField:10")
+                .exchange()
+                .expectStatus()
+                .isBadRequest();
+    }
+
+    @Test
+    @DisplayName("sort users with nonExistentField. This should return bad request because nonExistentField user field doesn't exist")
+    void test19() {
+        this.webTestClient
+                .get()
+                .uri("http://localhost:" + port + "/api/users?order=nonExistentField:ASC")
+                .exchange()
+                .expectStatus()
+                .isBadRequest();
+    }
+
+    @Test
+    @DisplayName("search users by name with invalid operator. This should return bad request because '>' is not valid operator for string type")
+    void test20() {
+        this.webTestClient
+                .get()
+                .uri("http://localhost:" + port + "/api/users?order=name>John")
+                .exchange()
+                .expectStatus()
+                .isBadRequest();
+    }
+
+    @Test
+    @DisplayName("1. search users with invalid search query. This should return bad request because the syntax is not valid")
+    void test21() {
+        this.webTestClient
+                .get()
+                .uri("http://localhost:" + port + "/api/users?order=name>>John")
+                .exchange()
+                .expectStatus()
+                .isBadRequest();
+    }
+
+    @Test
+    @DisplayName("2. search users with invalid search query. This should return bad request because the syntax is not valid")
+    void test22() {
+        this.webTestClient
+                .get()
+                .uri("http://localhost:" + port + "/api/users?order=name,John")
+                .exchange()
+                .expectStatus()
+                .isBadRequest();
+    }
+
+    @Test
+    @DisplayName("search user with userId:-1")
+    void test23() {
+        this.webTestClient
+                .get()
+                .uri("http://localhost:" + port + "/api/users/-1")
+                .exchange()
+                .expectStatus()
+                .isBadRequest();
+    }
+
+    @Test
+    @DisplayName("search user with userId:id")
+    void test24() {
+        this.webTestClient
+                .get()
+                .uri("http://localhost:" + port + "/api/users/id")
+                .exchange()
+                .expectStatus()
+                .isBadRequest();
     }
 }
